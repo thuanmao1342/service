@@ -26,11 +26,6 @@ public class LogController {
     public List<Users> logAppRun(){
         List<Customer> users = customerRepository.findAll();
         List<Users> list = usersRepository.findAll();
-        list.forEach(user ->{
-            user.setPassword(passwordEncoder.encode(user.getPassword()));
-            usersRepository.save(user);
-        });
-
         System.out.println(users);
         return list;
     }
