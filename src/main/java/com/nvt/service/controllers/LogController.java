@@ -5,7 +5,8 @@ import com.nvt.service.entities.Users;
 import com.nvt.service.repositories.CustomerRepository;
 import com.nvt.service.repositories.UsersRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -20,8 +21,6 @@ public class LogController {
 
     private final UsersRepository usersRepository;
     private final CustomerRepository customerRepository;
-
-    private final BCryptPasswordEncoder passwordEncoder;
 
     @GetMapping
     public List<Users> logAppRun(){
