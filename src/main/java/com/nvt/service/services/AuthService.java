@@ -49,11 +49,11 @@ public class AuthService {
         }
         try {
             Authentication authentication = authentication(user.getUserName(), user.getPassword());
-            String access_token = generateToken(request, authentication);
+            Tokens tokens = generateToken(request, authentication);
             authResponse.setStatus("SUCCESS");
             authResponse.setMessage("Đăng nhập thành công");
-            authResponse.setAccessToken(access_token);
-            authResponse.setRefreshToken(access_token);
+            authResponse.setAccessToken(tokens.getAccessToken());
+            authResponse.setRefreshToken(tokens.getRefreshToken());
         } catch (Exception e) {
             authResponse.setStatus("ERROR");
             authResponse.setMessage("Đăng nhập thất bại");
@@ -93,7 +93,7 @@ public class AuthService {
         return authenticationManager.authenticate(authenticationToken);
     }
 
-    private String generateToken (HttpServletRequest request, Authentication authResult) throws IOException, ServletException {
+    private Tokens generateToken (HttpServletRequest request, Authentication authResult) throws IOException, ServletException {
         User user = (User) authResult.getPrincipal();
         Algorithm algorithm = Algorithm.HMAC256(Index.SECRET_CODE.getBytes());
         String access_token = JWT.create()
@@ -107,9 +107,27 @@ public class AuthService {
                 .withSubject(user.getUsername())
                 .withExpiresAt(new Date(System.currentTimeMillis() + 30 * 60 * 1000))
                 .withIssuer(request.getRequestURL().toString())
-                .sign(algorithm);
-                
-        return access_token;
+                .sign(algorithm);;
+        return new Tokens(access_token, refresh_token);
+    }
+
+    private class Tokens{
+        private String accessToken;
+        private String refreshToken;
+
+        public String getAccessToken() {
+            return accessToken;
+        }
+
+        public String getRefreshToken() {
+            return refreshToken;
+        }
+
+        public Tokens(String accessToken, String refreshToken) {
+            this.accessToken = accessToken;
+            this.refreshToken = refreshToken;
+        }
+  
     }
 
 }
