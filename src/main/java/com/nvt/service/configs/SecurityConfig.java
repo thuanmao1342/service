@@ -1,8 +1,9 @@
 package com.nvt.service.configs;
 
-import com.nvt.service.filter.CustomAuthenticationFilter;
 import com.nvt.service.filter.CustomAuthorizationFilter;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -31,20 +32,16 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        // bug in here
-        CustomAuthenticationFilter customAuthenticationFilter = new CustomAuthenticationFilter(authenticationManagerBean());
-        customAuthenticationFilter.setFilterProcessesUrl("/api/login");
         http.csrf().disable();
-        http.authorizeHttpRequests().antMatchers("/api/login/**", "/api/logging/refreshToken", "/log/**").permitAll();
         http.sessionManagement().sessionCreationPolicy(STATELESS);
-        http.authorizeHttpRequests().anyRequest().permitAll();
-        http.addFilter(customAuthenticationFilter);
+        http.authorizeHttpRequests().antMatchers("/api/auth/login/**", "/log/**").permitAll();
+        http.authorizeHttpRequests().anyRequest().authenticated();
         http.addFilterBefore(new CustomAuthorizationFilter(), UsernamePasswordAuthenticationFilter.class);
     }
 
     @Bean
     @Override
-    public AuthenticationManager authenticationManagerBean() throws Exception{
+    public AuthenticationManager authenticationManagerBean() throws Exception {
         return super.authenticationManagerBean();
     }
 }
