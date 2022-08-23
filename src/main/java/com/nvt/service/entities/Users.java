@@ -17,7 +17,7 @@ public class Users {
     @Column(name = "id")
     private Integer id;
 
-    @Column(name = "user_name")
+    @Column(name = "username")
     private String userName;
 
     @Column(name = "password")
@@ -38,11 +38,11 @@ public class Users {
     @Column(name = "create_date")
     private Date createDate;
 
-    @Column(name = "login_fall_date")
-    private Date loginFallDate;
+    @Column(name = "login_fail_date")
+    private Date loginFailDate;
 
-    @Column(name = "login_fall_count")
-    private Integer loginFallCount;
+    @Column(name = "login_fail_count")
+    private Integer loginFailCount;
 
     @JsonIgnore
     @OneToMany(mappedBy = "user")
