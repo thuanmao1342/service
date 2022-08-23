@@ -8,7 +8,7 @@ public class AuthResponse {
     private String accessToken;
     private String refreshToken;
     private String expiresIn;
-    private String statusCode;
-    private String messageCode;
+    private String status;
+    private String message;
 
 }
