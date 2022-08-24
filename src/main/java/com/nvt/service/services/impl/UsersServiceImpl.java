@@ -7,12 +7,13 @@ import com.nvt.service.repositories.UsersRepository;
 import com.nvt.service.services.UsersService;
 import lombok.RequiredArgsConstructor;
 
-
+import org.springframework.data.domain.Page;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -27,6 +28,8 @@ public class UsersServiceImpl implements UserDetailsService, UsersService {
 
     private final RolesRepository rolesRepository;
 
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
+
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         // get password from request
@@ -37,5 +40,22 @@ public class UsersServiceImpl implements UserDetailsService, UsersService {
             authorities.add(new SimpleGrantedAuthority(role.getRoleCode()));
         }
         return new User(user.getUserName(), user.getPassword(), authorities);
+    }
+
+    @Override
+    public Users saveUser(Users user) {
+        if  (user.getId() == null) {
+            user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
+            return usersRepository.save(user);
+        } else {
+            Users userObj = usersRepository.findById(user.getId()).get();
+            return usersRepository.save(userObj);
+        }
+    }
+
+    @Override
+    public Page<Users> findAll(int page, int size) {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

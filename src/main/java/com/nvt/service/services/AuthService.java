@@ -19,8 +19,11 @@ import org.springframework.stereotype.Service;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.nvt.service.common.constants.Index;
+import com.nvt.service.common.constants.Messages;
+import com.nvt.service.common.constants.Status;
 import com.nvt.service.entities.Users;
 import com.nvt.service.models.AuthResponse;
+import com.nvt.service.models.Tokens;
 import com.nvt.service.repositories.UsersRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -37,26 +40,33 @@ public class AuthService {
     public AuthResponse checkLogin(String username, String password) throws AuthenticationException {
         Users user = usersRepository.findByUserName(username);
         AuthResponse authResponse = new AuthResponse();
+        if (user == null) {
+            authResponse.setStatus(Status.ERROR);
+            authResponse.setMessage(Messages.NOT_FOUND_USER);
+            return authResponse;
+        }
         if (checkLockUser(user)) {
-            authResponse.setStatus("LOCK");
-            authResponse.setMessage("Tài khoản đã bị khóa");
+            authResponse.setStatus(Status.ERROR);
+            authResponse.setMessage(Messages.USER_IS_LOOK);
             return authResponse;
         }
         if (checkPassword(user, password)) {
-            authResponse.setStatus("ERROR");
-            authResponse.setMessage("Sai mật khẩu");
+            Integer count = user.getLoginFailCount();
+            authResponse.setStatus(Status.ERROR);
+            authResponse.setMessage(Messages.WRONG_PASSWORD + count + "lần");
             return authResponse;
         }
         try {
-            Authentication authentication = authentication(user.getUserName(), user.getPassword());
+            Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
             Tokens tokens = generateToken(request, authentication);
-            authResponse.setStatus("SUCCESS");
+            authResponse.setStatus(Status.SUCCESS);
             authResponse.setMessage("Đăng nhập thành công");
+            authResponse.setExpiresIn((tokens.getExpiresIn()));
             authResponse.setAccessToken(tokens.getAccessToken());
             authResponse.setRefreshToken(tokens.getRefreshToken());
         } catch (Exception e) {
-            authResponse.setStatus("ERROR");
-            authResponse.setMessage("Đăng nhập thất bại");
+            authResponse.setStatus(Status.ERROR);
+            authResponse.setMessage("Đăng nhập thất bại"+e.getMessage());
         }
         return authResponse;
     }
@@ -66,12 +76,12 @@ public class AuthService {
             return false;
         } else {
             Integer count = user.getLoginFailCount();
-            if (count < 4) {
-                user.setLoginFailCount(count + 1);
-            } else {
+            if (count == 4) {
                 Date date = new Date();
                 user.setLoginFailCount(count + 1);
                 user.setLoginFailDate(date);
+            } else {
+                user.setLoginFailCount(count + 1);
             }
             usersRepository.save(user);
             return true;
@@ -87,18 +97,13 @@ public class AuthService {
         }
     }
 
-    private Authentication authentication(String username, String password) throws AuthenticationException {
-        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username,
-                password);
-        return authenticationManager.authenticate(authenticationToken);
-    }
-
     private Tokens generateToken (HttpServletRequest request, Authentication authResult) throws IOException, ServletException {
         User user = (User) authResult.getPrincipal();
         Algorithm algorithm = Algorithm.HMAC256(Index.SECRET_CODE.getBytes());
+        Date date = new Date(System.currentTimeMillis() + 10 * 60 * 1000);
         String access_token = JWT.create()
                 .withSubject(user.getUsername())
-                .withExpiresAt(new Date(System.currentTimeMillis() + 10 * 60 * 1000))
+                .withExpiresAt(date)
                 .withIssuer(request.getRequestURL().toString())
                 .withClaim("roles",
                         user.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()))
@@ -108,26 +113,7 @@ public class AuthService {
                 .withExpiresAt(new Date(System.currentTimeMillis() + 30 * 60 * 1000))
                 .withIssuer(request.getRequestURL().toString())
                 .sign(algorithm);;
-        return new Tokens(access_token, refresh_token);
-    }
-
-    private class Tokens{
-        private String accessToken;
-        private String refreshToken;
-
-        public String getAccessToken() {
-            return accessToken;
-        }
-
-        public String getRefreshToken() {
-            return refreshToken;
-        }
-
-        public Tokens(String accessToken, String refreshToken) {
-            this.accessToken = accessToken;
-            this.refreshToken = refreshToken;
-        }
-  
+        return new Tokens(access_token, refresh_token, date.toString());
     }
 
 }
