@@ -40,6 +40,7 @@ public class AuthService {
     public AuthResponse checkLogin(String username, String password) throws AuthenticationException {
         Users user = usersRepository.findByUserName(username);
         AuthResponse authResponse = new AuthResponse();
+        Integer count = user.getLoginFailCount();
         if (user == null) {
             authResponse.setStatus(Status.ERROR);
             authResponse.setMessage(Messages.NOT_FOUND_USER);
@@ -51,22 +52,26 @@ public class AuthService {
             return authResponse;
         }
         if (checkPassword(user, password)) {
-            Integer count = user.getLoginFailCount();
+            count = user.getLoginFailCount();
             authResponse.setStatus(Status.ERROR);
             authResponse.setMessage(Messages.WRONG_PASSWORD + count + "lần");
             return authResponse;
+        }
+        if (count > 0) {
+            user.setLoginFailCount(0);
+            usersRepository.save(user);
         }
         try {
             Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
             Tokens tokens = generateToken(request, authentication);
             authResponse.setStatus(Status.SUCCESS);
-            authResponse.setMessage("Đăng nhập thành công");
+            authResponse.setMessage("Đăng nhập thành công!");
             authResponse.setExpiresIn((tokens.getExpiresIn()));
             authResponse.setAccessToken(tokens.getAccessToken());
             authResponse.setRefreshToken(tokens.getRefreshToken());
         } catch (Exception e) {
             authResponse.setStatus(Status.ERROR);
-            authResponse.setMessage("Đăng nhập thất bại"+e.getMessage());
+            authResponse.setMessage("Đăng nhập thất bại: "+e.getMessage());
         }
         return authResponse;
     }
