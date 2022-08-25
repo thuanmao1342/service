@@ -41,7 +41,7 @@ public class AuthService {
         Users user = usersRepository.findByUserName(username);
         AuthResponse authResponse = new AuthResponse();
         Integer count = user.getLoginFailCount();
-        if (user == null) {
+        if (checkUserNull(user)) {
             authResponse.setStatus(Status.ERROR);
             authResponse.setMessage(Messages.NOT_FOUND_USER);
             return authResponse;
@@ -96,6 +96,14 @@ public class AuthService {
     private Boolean checkLockUser(Users user) {
         Integer count = user.getLoginFailCount();
         if (count >= 5 || user.getLoginFailDate() != null) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private Boolean checkUserNull(Users user) {
+        if (user == null) {
             return true;
         } else {
             return false;

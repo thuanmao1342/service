@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -28,7 +27,7 @@ public class EmailServiceImpl implements EmailService {
 
         helper.setTo(details.getSubject());
         helper.setSubject("Test email with attachments");
-        List listFiles = details.getFiles();
+        List<String> listFiles = details.getFiles();
         for (int i = 0; i < listFiles.size(); i++) {
             FileSystemResource file = new FileSystemResource(new File((String) listFiles.get(i)));
             helper.addAttachment("Readme", file);
