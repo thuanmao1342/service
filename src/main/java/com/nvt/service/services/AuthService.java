@@ -40,7 +40,8 @@ public class AuthService {
     public AuthResponse checkLogin(String username, String password) throws AuthenticationException {
         Users user = usersRepository.findByUserName(username);
         AuthResponse authResponse = new AuthResponse();
-        if (user == null) {
+        Integer count = user.getLoginFailCount();
+        if (checkUserNull(user)) {
             authResponse.setStatus(Status.ERROR);
             authResponse.setMessage(Messages.NOT_FOUND_USER);
             return authResponse;
@@ -51,22 +52,27 @@ public class AuthService {
             return authResponse;
         }
         if (checkPassword(user, password)) {
-            Integer count = user.getLoginFailCount();
+            count = user.getLoginFailCount();
             authResponse.setStatus(Status.ERROR);
             authResponse.setMessage(Messages.WRONG_PASSWORD + count + "lần");
             return authResponse;
+        }
+        if (count > 0) {
+            user.setLoginFailCount(0);
+            usersRepository.save(user);
         }
         try {
             Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
             Tokens tokens = generateToken(request, authentication);
             authResponse.setStatus(Status.SUCCESS);
-            authResponse.setMessage("Đăng nhập thành công");
+            authResponse.setMessage("Đăng nhập thành công!");
             authResponse.setExpiresIn((tokens.getExpiresIn()));
             authResponse.setAccessToken(tokens.getAccessToken());
             authResponse.setRefreshToken(tokens.getRefreshToken());
+            authResponse.setUser(user.getUserName());
         } catch (Exception e) {
             authResponse.setStatus(Status.ERROR);
-            authResponse.setMessage("Đăng nhập thất bại"+e.getMessage());
+            authResponse.setMessage("Đăng nhập thất bại: "+e.getMessage());
         }
         return authResponse;
     }
@@ -91,6 +97,14 @@ public class AuthService {
     private Boolean checkLockUser(Users user) {
         Integer count = user.getLoginFailCount();
         if (count >= 5 || user.getLoginFailDate() != null) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private Boolean checkUserNull(Users user) {
+        if (user == null) {
             return true;
         } else {
             return false;

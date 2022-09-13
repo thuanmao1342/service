@@ -10,5 +10,7 @@ public class AuthResponse {
     private String expiresIn;
     private String status;
     private String message;
+    private String user;
+    private String[] roles;
 
 }
