@@ -69,6 +69,7 @@ public class AuthService {
             authResponse.setExpiresIn((tokens.getExpiresIn()));
             authResponse.setAccessToken(tokens.getAccessToken());
             authResponse.setRefreshToken(tokens.getRefreshToken());
+            authResponse.setUser(user.getUserName());
         } catch (Exception e) {
             authResponse.setStatus(Status.ERROR);
             authResponse.setMessage("Đăng nhập thất bại: "+e.getMessage());
