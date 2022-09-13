@@ -40,7 +40,6 @@ public class AuthService {
     public AuthResponse checkLogin(String username, String password) throws AuthenticationException {
         Users user = usersRepository.findByUserName(username);
         AuthResponse authResponse = new AuthResponse();
-        Integer count = user.getLoginFailCount();
         if (checkUserNull(user)) {
             authResponse.setStatus(Status.ERROR);
             authResponse.setMessage(Messages.NOT_FOUND_USER);
@@ -51,10 +50,12 @@ public class AuthService {
             authResponse.setMessage(Messages.USER_IS_LOOK);
             return authResponse;
         }
+        Integer count = user.getLoginFailCount();
         if (checkPassword(user, password)) {
             count = user.getLoginFailCount();
             authResponse.setStatus(Status.ERROR);
-            authResponse.setMessage(Messages.WRONG_PASSWORD + count + "lần");
+            authResponse.setMessage(Messages.WRONG_PASSWORD);
+            authResponse.setLoginFailCount(count);
             return authResponse;
         }
         if (count > 0) {
